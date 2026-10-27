@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EduPredict AI – Student Performance Prediction</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="brand"><span class="logo">🎓</span><div><h1>EduPredict <span>AI</span></h1>
+      <p>AI-powered student performance prediction</p></div></div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="predict">Predict</button>
+      <button class="tab" data-tab="batch">Batch Analysis</button>
+      <button class="tab" data-tab="insights">Model Insights</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- PREDICT -->
+  <section id="predict" class="panel active">
+    <div class="grid2">
+      <form id="predictForm" class="card" novalidate>
+        <h2>Student Profile</h2>
+        <div class="fields">
+          <label>Study hours / week <b id="v_study_hours">14</b>
+            <input type="range" name="study_hours" min="0" max="40" step="0.5" value="14"></label>
+          <label>Attendance % <b id="v_attendance">85</b>
+            <input type="range" name="attendance" min="0" max="100" step="1" value="85"></label>
+          <label>Previous grade % <b id="v_previous_grade">65</b>
+            <input type="range" name="previous_grade" min="0" max="100" step="1" value="65"></label>
+          <label>Assignments completed % <b id="v_assignments_completed">80</b>
+            <input type="range" name="assignments_completed" min="0" max="100" step="1" value="80"></label>
+          <label>Sleep hours / night <b id="v_sleep_hours">7</b>
+            <input type="range" name="sleep_hours" min="3" max="10" step="0.5" value="7"></label>
+          <label>Class participation (0–10) <b id="v_participation">6</b>
+            <input type="range" name="participation" min="0" max="10" step="0.5" value="6"></label>
+          <label>Parental support (1–5) <b id="v_parental_support">3</b>
+            <input type="range" name="parental_support" min="1" max="5" step="1" value="3"></label>
+          <label>Extracurricular activities / week <b id="v_extracurricular">2</b>
+            <input type="range" name="extracurricular" min="0" max="10" step="1" value="2"></label>
+          <label class="select">Internet access
+            <select name="internet_access"><option value="1">Yes</option><option value="0">No</option></select></label>
+          <label class="select">Extra tutoring
+            <select name="tutoring"><option value="0">No</option><option value="1">Yes</option></select></label>
+        </div>
+        <div class="row">
+          <button type="submit" class="btn primary">Predict Performance</button>
+          <button type="button" id="resetBtn" class="btn ghost">Reset</button>
+        </div>
+        <p id="formError" class="error" hidden></p>
+      </form>
+
+      <div class="card result" id="resultCard">
+        <div id="placeholder" class="placeholder">
+          <div class="big">📊</div>
+          <p>Adjust the sliders and click <b>Predict Performance</b> to see the forecast.</p>
+        </div>
+        <div id="resultBody" hidden>
+          <h2>Prediction</h2>
+          <div class="gauge-wrap">
+            <svg viewBox="0 0 120 120" class="gauge">
+              <circle cx="60" cy="60" r="52" class="g-bg"/>
+              <circle cx="60" cy="60" r="52" class="g-fg" id="gFg" transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="g-text"><span id="scoreVal">0</span><small>predicted score</small></div>
+          </div>
+          <div class="chips">
+            <div class="chip"><small>Grade</small><b id="gradeVal">-</b></div>
+            <div class="chip"><small>Pass chance</small><b id="probVal">-</b></div>
+            <div class="chip" id="riskChip"><small>Risk</small><b id="riskVal">-</b></div>
+          </div>
+          <h3>Recommendations</h3>
+          <ul id="tips" class="tips"></ul>
+          <h3>What's driving this score?</h3>
+          <p class="muted small">Points gained or lost versus an average student.</p>
+          <div id="impact" class="impact"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BATCH -->
+  <section id="batch" class="panel">
+    <div class="card">
+      <h2>Batch Analysis</h2>
+      <p class="muted">Upload a CSV for a whole class. Required columns:
+        <code id="colList"></code>. An optional <code>name</code> column is supported.</p>
+      <div class="row">
+        <input type="file" id="csvFile" accept=".csv">
+        <button id="batchBtn" class="btn primary">Analyze</button>
+        <a href="/api/sample-csv" class="btn ghost">Download sample CSV</a>
+      </div>
+      <p id="batchError" class="error" hidden></p>
+      <div id="batchOut" hidden>
+        <div class="stats" id="batchStats"></div>
+        <div class="row"><input type="search" id="batchSearch" placeholder="Filter by name…">
+          <select id="riskFilter"><option value="">All risk levels</option><option>High</option><option>Medium</option><option>Low</option></select>
+          <button id="exportBtn" class="btn ghost">Export CSV</button></div>
+        <div class="table-wrap"><table id="batchTable"><thead><tr>
+          <th>Student</th><th>Score</th><th>Grade</th><th>Pass %</th><th>Risk</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section id="insights" class="panel">
+    <div class="stats" id="modelStats"></div>
+    <div class="grid2">
+      <div class="card"><h2>Feature Importance</h2><div id="fiChart" class="bars"></div></div>
+      <div class="card"><h2>Classifier Confusion Matrix</h2><div id="cm" class="cm"></div>
+        <p class="muted small">Rows = actual, columns = predicted. Evaluated on a held-out 20% test set.</p>
+        <h3>About the models</h3>
+        <p class="muted small">A <b>Gradient Boosting Regressor</b> predicts the final score; a <b>Random Forest Classifier</b> estimates the probability of passing (score ≥ 50). Both are trained on <span id="dsInfo"></span>.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap foot">EduPredict AI · Predictions are estimates to support – not replace – educator judgment.</footer>
+<script src="app.js"></script>
+</body>
+</html>
